@@ -1,0 +1,31 @@
+{
+  "manifest_version": 2,
+  "name": "Vachin",
+  "version": "0.9.5",
+  "homepage_url": "https://github.com/vachin/mozilla-webex",
+  "description": "Can't articulate your feelings? Don't worry we're here to help you..!",
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png"
+  },
+  "permissions": [
+    "activeTab",
+    "tabs"
+  ],
+  "browser_action": {
+    "browser_style": true,
+    "default_icon": {
+      "19": "icons/icon-19.png",
+      "38": "icons/icon-38.png"
+    },
+    "default_title": "Use Vachin",
+    "default_popup": "popup/vachin.html"
+  },
+  "background": {
+    "scripts": ["vachin.js"]
+  },
+  "web_accessible_resources": [
+    "icons/copy.png",
+    "icons/img_loading.gif"
+  ]
+}
