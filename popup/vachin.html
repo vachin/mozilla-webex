@@ -4,23 +4,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
     <title>Vachin</title>
+    <link href="vachin.css" type="text/css" rel="stylesheet"/>
 </head>
 <body>
 <div class="vachin">
     <div class="header">
-        <input type="text" id="vachin-selector" list="vachin-categories" placeholder="Select Category..!" />
-        <datalist id="vachin-categories">
-            <option value="Daily Wishes">
-            <option value="Friendship">
-            <option value="Love">
-            <option value="Others">
-        </datalist>
+        <input id="vachin-selector" list="vachin-categories" placeholder="Select Category..!" name="category" />
     </div>
     <div class="body">
         <table>
-            <body id="vachin-messages">
-                <tr><td class="vachin-message">Turning Coffee into code..!</td><td><img src="../icons/copy.png"></td></tr>
-            </body>
+            <tbody id="vachin-messages"></tbody>
         </table>
         <img id="vachin-loading" src="../icons/img_loading.gif" />
         <h3 id="vachin-error">Something went wrong..!</h3>

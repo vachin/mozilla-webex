@@ -10,9 +10,11 @@
   },
   "permissions": [
     "activeTab",
-    "tabs"
+    "tabs",
+    "*://api.vach.in/*",
+    "webRequest"
   ],
-  "browser_action": {
+  "page_action": {
     "browser_style": true,
     "default_icon": {
       "19": "icons/icon-19.png",
@@ -22,7 +24,7 @@
     "default_popup": "popup/vachin.html"
   },
   "background": {
-    "scripts": ["vachin.js"]
+    "scripts": ["content_scripts/bootstrap.js"]
   },
   "web_accessible_resources": [
     "icons/copy.png",

@@ -12,14 +12,13 @@ var DOMAINS_ALLOWED = [ //TODO: take from API
     "https://web.skype.com",
     "https://web.whatsapp.com"
 ];
-var CSS = '';
 var HTTP_METHODS = {
     GET: "GET",
     POST: "POST",
     PATCH: "PATCH"
 };
-var VACHIN_API_ROOT = "https://api.vach.in";
-var DEFAULT_PAGE_COUNT = 10;
+var VACHIN_API_ROOT = "http://192.168.43.174:9000/";
+var DEFAULT_PAGE_COUNT = 20;
 
 var ERROR_MESSAGES = {
     _404: "Nothing with us..!, why don't you add one ?",
@@ -29,11 +28,21 @@ var ERROR_MESSAGES = {
 /**
  * Message API Builder
  * @param categoryId
+ * @param queryParams
+ * @returns {string}
+ */
+function getMessageAPI(categoryId, queryParams){
+    return "categories/" + categoryId + "/messages?count=" + queryParams.count + "&page=" + queryParams.page;
+}
+
+/**
+ *
+ * @param categoryId
  * @param messageId
  * @returns {string}
  */
-function getMessageAPI(categoryId, messageId){
-    return "categories/" + categoryId + "/messages/" + (messageId ? messageId : "");
+function getUpdateMessageCountAPI(categoryId, messageId){
+    return "categories/" + categoryId + "/messages/count?messageId=" + messageId;
 }
 
 /**
@@ -43,7 +52,7 @@ function getMessageAPI(categoryId, messageId){
  * @returns {string}
  */
 function getSearchAPI(query, categoryId){
-    return "messages/search?q=" + query + categoryId ? "&categoryId=" + categoryId : "";
+    return "messages/search?q=" + query + (categoryId ? "&categoryId=" + categoryId : "");
 }
 
 var APIS = {
@@ -57,8 +66,8 @@ var APIS = {
     },
     getMessages: {
         method: "GET",
-        endPoint: function (categoryId) {
-            return getMessageAPI(categoryId);
+        endPoint: function (categoryId, queryParms) {
+            return getMessageAPI(categoryId, queryParms);
         }
     },
     postMessage: {
@@ -68,9 +77,9 @@ var APIS = {
         }
     },
     updateCount: {
-        method: "PATCH",
+        method: "GET",
         endPoint: function (categoryId, messageId) {
-            return getMessageAPI(categoryId, messageId);
+            return getUpdateMessageCountAPI(categoryId, messageId);
         }
     },
     search: {
@@ -81,30 +90,7 @@ var APIS = {
     }
 };
 
-var vachinCache = {
-    daily: [
-        "Good Morning..!",
-        "Good Evening..!"
-    ],
-    friendship: [
-        "East or West Friendship is best.",
-        "You are my BFF.",
-        "Jaldhi avoree..!",
-        "What about Second show..?"
-    ],
-    love: [
-        "I Love You.",
-        "I just joked..!",
-        "Really...?",
-        "Any doubt baby..?",
-        "No issues..!",
-        "I hate you..!",
-        "Just break up..!",
-        "How are days going ?",
-        "Boring without you :(",
-        "Get the hell out of here..!"
-    ]
-};
+var vachinCache = {}; //Application Buffer
 
 var categoryChooser = document.getElementById("vachin-selector");
 var categoryList = document.getElementById("vachin-categories");
@@ -120,15 +106,22 @@ var chosenCategory;
 categoryChooser.addEventListener("input", function(e) {
     showLoading();
     chosenCategory = e.target.value;
-    if(vachinCache.hasOwnProperty(chosenCategory)){
+    //chosenCategory = e.target.dataset.value;
+    //var chosenCategoryId = e.target.dataset.value;
+    /*if(vachinCache.hasOwnProperty(chosenCategory)){ //FIXME: only search as of now
         if(vachinCache[chosenCategory].length > 0){
             populateMessages(vachinCache[chosenCategory]);
         }else{
             getMessages(chosenCategory);
         }
-    }else{
-        searchMessages(chosenCategory); //it's query actually
-    }
+    }else{*/
+        if(chosenCategory.trim() !== ""){
+            searchMessages(chosenCategory.trim()); //it's query actually
+        }else{
+            hideLoading();
+            hideError();
+        }
+    //}
 });
 
 /**
@@ -180,7 +173,7 @@ function searchMessages(query, categoryId) {
  * @param categoryId
  */
 function getMessages(categoryId) {
-    callAPI(APIS.getMessages.endPoint(categoryId), APIS.getMessages.method, null, function (messagesResponse) {
+    callAPI(APIS.getMessages.endPoint(categoryId, {page: 1, count: DEFAULT_PAGE_COUNT}), APIS.getMessages.method, null, function (messagesResponse) {
         var messages = JSON.parse(messagesResponse);
         populateMessages(messages);
     }, function (err) {
@@ -191,9 +184,9 @@ function getMessages(categoryId) {
 /**
  * Builds the initial cache from storage or from server
  */
-function buildInitialCache() {
-    if(cacheService.get){
-        vachinCache = cacheService.get;
+function bootstrapVachin() {
+    /*cacheService.get("vachinCache").then(function (cache) { //FIXME: storage not working
+        vachinCache = cache.vachinCache;
         for(var category in vachinCache){
             if(vachinCache.hasOwnProperty(category)){
                 if(vachinCache[category].length > 0){
@@ -202,27 +195,29 @@ function buildInitialCache() {
                 }
             }
         }
-    }else {
+    }, function (err) {*/
         callAPI(APIS.getCategories.endPoint, APIS.getCategories.method, null, function (categoriesResponse) {
             try {
                 var categories = JSON.parse(categoriesResponse);
-                categories.forEach(function (category) { //building initial cache list
+                categories.forEach(function (category, index) { //building initial cache list
+                    if(index === 0){
+                        callAPI(APIS.getMessages.endPoint(category._id, {page: 1, count: DEFAULT_PAGE_COUNT}), APIS.getMessages.method, null, function (messagesResponse) {
+                            var messages = JSON.parse(messagesResponse);
+                            vachinCache[categories._id] = messages;
+                            //cacheService.set(vachinCache);
+                            populateMessages(messages, categories._id);
+                        });
+                    }
                     vachinCache[category._id] = [];
                 });
-                populateCategories(categories);
-                callAPI(APIS.getMessages.endPoint(categories[0]._id), APIS.getMessages.method, null, function (messagesResponse) {
-                    var messages = JSON.parse(messagesResponse);
-                    vachinCache[categories[0]._id] = messages;
-                    cacheService.set(vachinCache);
-                    populateMessages(messages, categories[0]._id);
-                });
+                //populateCategories(categories);
             } catch (e) {
                 showError(ERROR_MESSAGES._505);
             }
         }, function (err) {
             showError(ERROR_MESSAGES._505);
         });
-    }
+    //});
 }
 
 /**
@@ -233,33 +228,56 @@ function populateCategories(categories) {
     while (categoryList.firstChild) { //removing existing categories
         categoryList.removeChild(categoryList.firstChild);
     }
-    categories.forEach(function (category) {
+    categories.forEach(function (category, index) {
         var option = document.createElement("option");
         option.setAttribute("value", category.name);
         option.setAttribute("data-value", category._id);
+        if(index === 1){
+            option.defaultSelected = true;
+        }
         categoryList.appendChild(option);
     });
+    console.log(categoryList);
 }
 
 /**
  *
  * @param categoryId
  * @param messageId
+ * @param message
  * @returns {Element}
  */
-function getCopyIcon(categoryId, messageId) {
+function getCopyIcon(categoryId, messageId, message) {
     var copyEl = document.createElement("img");
     copyEl.setAttribute("src", "../icons/copy.png");
-    copyEl.setIdAttribute(messageId, true);
+    copyEl.setAttribute("id", messageId);
+    copyEl.setAttribute("width", "16px");
+    copyEl.setAttribute("height", "16px");
+    copyEl.classList.add("vachin-copy-icon");
     copyEl.addEventListener('click', function (e) {
+        copyToClipboard(message); //copies message to clipboard
         callAPI(APIS.updateCount.endPoint(categoryId, messageId), APIS.updateCount.method, {}, function (res) {
             if(JSON.parse(res)){
                 //TODO: update count either real time or later need to decide
-                document.getElementById("count-" + messageId).innerText  += 1; //FIXME: check this
+                var counter = document.getElementById("count-" + messageId);
+                counter.innerText  = Number.parseInt(counter.innerText) + 1; //FIXME: check this
             }
         });
     });
     return copyEl;
+}
+
+/**
+ * copies text to clipboard
+ * @param text
+ */
+function copyToClipboard(text) {
+    var tempInput = document.createElement("input");
+    tempInput.value = text;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    document.execCommand("copy");
+    tempInput.remove();
 }
 
 /**
@@ -278,9 +296,10 @@ function populateMessages(messages, categoryId) {
         var copyTd = document.createElement("td");
         messageTd.innerText = message.text;
         messageTd.classList.add("vachin-message");
-        countTd.innerText = message.count;
-        countTd.setIdAttribute("count-" + message._id, true);
-        copyTd.appendChild(getCopyIcon(message._id));
+        countTd.innerText = message.count || 0;
+        countTd.setAttribute("id", "count-" + message._id);
+        countTd.classList.add("vachin-count");
+        copyTd.appendChild(getCopyIcon(message.category_id, message._id, message.text));
         tr.appendChild(messageTd);
         tr.appendChild(countTd);
         tr.appendChild(copyTd);
@@ -307,6 +326,8 @@ function callAPI(endPoint, method, body, successCallback, errorCallback) {
         }
     };
     xmlHTTP.open(method, VACHIN_API_ROOT + endPoint, true);
+    xmlHTTP.setRequestHeader('Accept', 'application/json');
+    xmlHTTP.setRequestHeader('Content-type', 'application/json');
     xmlHTTP.send();
 }
 
@@ -314,11 +335,13 @@ function callAPI(endPoint, method, body, successCallback, errorCallback) {
  *
  * @type {{set: cacheService.set, get: cacheService.get}}
  */
-var cacheService = {
+/*var cacheService = {
     set: function(cache) {
-        storage.StorageArea.set("vachinCache", JSON.stringify(cache));
+        browser.storage.local.set(cache);
     },
-    get: function(){
-        return JSON.parse(storage.StorageArea.set("vachinCache"));
+    get: function(key){
+        return browser.storage.local.get(key);
     }
-};
+};*/
+
+bootstrapVachin();

@@ -35,7 +35,7 @@
 .vachin input{
     width: 100%;
     height: 34px;
-    font-size: 24px;
+    font-size: 20px;
 }
 
 .vachin table{
@@ -43,13 +43,32 @@
 }
 
 .vachin tr{
-    width: 100%;
     min-height: 24px;
     font-size: 16px;
 }
 
-.vachin tr td{
-    display: block;
+.vachin .vachin-copy-icon{
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.vachin-copy-icon:hover{
+    color: #AAA;
+}
+
+.vachin tr td:nth-child(1){
+    width: 80%;
+}
+
+.vachin tr td:nth-child(2){
+    text-align: center;
+    width: 10%;
+}
+
+.vachin tr td:nth-child(3){
+    text-align: center;
+    width: 10%;
 }
 
 .vachin tr:nth-of-type(odd){
@@ -61,5 +80,7 @@
 }
 
 #vachin-error, #vachin-loading{
+    width: 90%;
+    margin: 0 auto;
     display: none;
 }
