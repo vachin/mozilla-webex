@@ -17,7 +17,7 @@ var HTTP_METHODS = {
     POST: "POST",
     PATCH: "PATCH"
 };
-var VACHIN_API_ROOT = "http://192.168.43.174:9000/";
+var VACHIN_API_ROOT = "http://api.vach.in/";
 var DEFAULT_PAGE_COUNT = 20;
 
 var ERROR_MESSAGES = {
