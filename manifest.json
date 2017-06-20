@@ -24,10 +24,15 @@
     "default_popup": "popup/vachin.html"
   },
   "background": {
-    "scripts": ["content_scripts/bootstrap.js"]
+    "page": ["background/index.html"],
+    "scripts": ["background/index.js"]
   },
   "web_accessible_resources": [
     "icons/copy.png",
     "icons/img_loading.gif"
-  ]
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "browser_style": true
+  }
 }
